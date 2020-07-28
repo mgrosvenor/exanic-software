@@ -86,7 +86,7 @@ enum conf_option_types {
 #define EXANIC_DRIVER_SYSFS_ENTRY "/sys/bus/pci/drivers/exanic"
 
 /* Global to switch on json formatted output */
-static int json_out = 1 ;
+static int json_out = 0 ;
 
 
 /* Print a key/value (format) pair to either human or machine readable format */
@@ -2624,7 +2624,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (strcmp(argv[arcc-1], "json") == 0)))
+    if (strcmp(argv[argc-1], "json") == 0)
     {
         json_out = 1;
         argc--;
