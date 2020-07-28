@@ -86,7 +86,7 @@ enum conf_option_types {
 #define EXANIC_DRIVER_SYSFS_ENTRY "/sys/bus/pci/drivers/exanic"
 
 /* Global to switch on json formatted output */
-static int json_out = 0;
+static int json_out = 1 ;
 
 
 /* Print a key/value (format) pair to either human or machine readable format */
@@ -98,10 +98,15 @@ int printkv ( int indent, const char* key, const char* valuef, ... )
     char fmtstr [512] = {};
 
     /* Make a new format string with all the constants in it */
-    if(!json_out)
-        snprintf(fmtstr,512,"%*s%s%s: %s\n", indent, "", listchar, key, vf);
+    if(json_out)
+    {
+        if(valuef)
+            snprintf(fmtstr,512,"%*s { \"%s\" : \"%s\" } \n", indent, "", key, valuef);
+        else   
+            snprintf(fmtstr,512,"%*s { \"%s\" : [ \n", indent, "", key);
+}
     else     
-        snprintf(fmtstr,512,"%*s{ \"%s" : \"%s\" } \n", indent, "", key, valuef);
+        snprintf(fmtstr,512,"%*s%s : %s\n", indent, "", key, valuef);
     
 
     /* Now actually print it*/
