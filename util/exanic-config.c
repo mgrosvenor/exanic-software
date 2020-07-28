@@ -2624,6 +2624,12 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    if (strcmp(argv[arcc-1], "json") == 0)))
+    {
+        json_out = 1;
+        argc--;
+    }
+
     if (argc < 2 || (argc == 2 && (strcmp(argv[1], "-v") == 0)))
     {
         int verbose = (argc == 2)? 1:0;
