@@ -834,7 +834,7 @@ void show_device_info(const char *device, int port_number, int verbose)
                     printj_kv(4,1,"MAC filters", "%d", mac_rules);
                     printj_kv(4,1,"IP filters", "%d", ip_rules);
 		}
-                printj_kv(4,"TX buffer size", "%dkB", tx_size);
+                printj_kv(4,1,"TX buffer size", "%dkB", tx_size);
             }
 
             loopback = get_local_loopback(exanic, i);
@@ -938,7 +938,7 @@ void show_device_info(const char *device, int port_number, int verbose)
             printj_kv(4,0,"TX packets","%u", port_stats.tx_count);
         }
 
-        printj_eobj(4);
+        printj_eobj(4,1);
     }
 
     release_handle(exanic);
@@ -956,7 +956,7 @@ void show_all_devices(int verbose, int* ndevices)
 
     if(json_out)
     {
-        printj_sjson();
+        printj_sobj();
         printj_slst(0,"exanic");
     }
 
@@ -991,7 +991,7 @@ void show_all_devices(int verbose, int* ndevices)
     if(json_out)
     {
         printj_elst(2);
-        printj_ejson();
+        printj_ejobj(2,1);
     }
         
     if (ndevices)
