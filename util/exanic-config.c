@@ -710,6 +710,9 @@ void show_device_info(const char *device, int port_number, int verbose)
     else
         first_port = last_port = port_number;
 
+    if (json_out)
+        printj_slst(2,"port");
+
     for (i = first_port; i <= last_port; i++)
     {
         int rx_usable, tx_usable;
@@ -720,7 +723,8 @@ void show_device_info(const char *device, int port_number, int verbose)
         if (!exanic_port_configurable(exanic, i))
             continue;
 
-        printj_kv(2, "Port %d", NULL, i);
+        if (!json_out)
+            printj_kv(2, "Port %d", NULL, i);
 
         rx_usable = exanic_port_rx_usable(exanic, i);
         tx_usable = exanic_port_tx_usable(exanic, i);
@@ -926,6 +930,8 @@ void show_device_info(const char *device, int port_number, int verbose)
 
             printj_kv(4,"TX packets","%u", port_stats.tx_count);
         }
+
+        printj_elst(4);
     }
 
     release_handle(exanic);
