@@ -130,9 +130,9 @@ int printj_ejson () { return printf("}\n"); }
 int printj_sobj (int indent, const char* name)
 {
     if(json_out)
-        return printf(fmtstr,512,"%*s\"%s\" : {\n", indent, "", name);
+        return printf("%*s\"%s\" : {\n", indent, "", name);
     else     
-        return printf(fmtstr,512,"%*s%s\n", indent, "", name);
+        return printf("%*s%s\n", indent, "", name);
 }
 
 /* End a JSON object */
@@ -142,9 +142,9 @@ int printj_eobj (int indent) { return printf("%*s}\n", indent, ""); }
 int printj_slst  (int indent, const char* fomrat, ...)
 {
     if(json_out)
-        return printf(fmtstr,512,"%*s\"%s\" : [\n", indent, "", name);
+        return printf("%*s\"%s\" : [\n", indent, "", name);
     else     
-        return printf(fmtstr,512,"%*s%s\n", indent, "", name);
+        return printf("%*s%s\n", indent, "", name);
 }
 
 /* End a JSON List */
