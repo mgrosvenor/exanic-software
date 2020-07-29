@@ -513,12 +513,7 @@ void show_device_info(const char *device, int port_number, int verbose)
     rev_date = exanic_get_hw_rev_date(exanic);
 
 
-    if(json_out)
-    {
-        printj_sjson();
-        printj_slst(0,"exanic");
-    }
-    else
+    if(!json_out)
       printf("Device %s\n", device);
 
     str = exanic_hardware_id_str(hw_type);
@@ -944,6 +939,12 @@ void show_all_devices(int verbose, int* ndevices)
     int num;
     int nnics = 0;
 
+    if(json_out)
+    {
+        printj_sjson();
+        printj_slst(0,"exanic");
+    }
+
     do
     {
         exanic_num = INT_MAX;
@@ -971,6 +972,13 @@ void show_all_devices(int verbose, int* ndevices)
         }
     }
     while (exanic_num < INT_MAX);
+
+    if(json_out)
+    {
+        printj_elst();
+        printj_ejson();
+    }
+        
     if (ndevices)
         *ndevices = nnics;
 }
@@ -2447,18 +2455,49 @@ int handle_options_on_nic(char* device, int port_number, int argc, char** argv)
 
     if (argc == 2)
     {
+        if(json_out)
+        {
+            printj_sjson();
+            printj_slst(0,"exanic");
+        }
         show_device_info(device, port_number, 0);
+
+        if(json_out)
+        {
+            printj_elst(0);
+            printj_ejson();
+        }
         return 0;
     }
     else if (argc == 3 && strcmp(argv[2], "-v") == 0)
     {
+        if(json_out)
+        {
+            printj_sjson();
+            printj_slst(0,"exanic");
+        }   
         show_device_info(device, port_number, 1);
+        if(json_out)
+        {
+            printj_elst(0);
+            printj_ejson();
+        }
         return 0;
     }
     else if (argc == 4 && strcmp(argv[2], "sfp") == 0
             && strcmp(argv[3], "status") == 0 && port_number != -1)
     {
+        if(json_out)
+        {
+            printj_sjson();
+            printj_slst(0,"exanic");
+        }   
         show_sfp_status(device, port_number);
+        if(json_out)
+        {
+            printj_elst(0);
+            printj_ejson();
+        }
         return 0;
     }
     else if (argc == 4 && strcmp(argv[2], "counters") == 0
