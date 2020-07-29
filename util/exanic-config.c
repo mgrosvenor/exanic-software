@@ -139,16 +139,16 @@ int printj_sobj (int indent, const char* name)
 int printj_eobj (int indent) { return printf("%*s}\n", indent, ""); }
 
 /* Start a JSON list */
-int printj_slst  (int indent, const char* fomrat, ...)
+int printj_slst  (int indent, const char* name)
 {
     if(json_out)
         return printf("%*s\"%s\" : [\n", indent, "", name);
-    else     
-        return printf("%*s%s\n", indent, "", name);
+    
+    return printf("%*s%s\n", indent, "", name);
 }
 
 /* End a JSON List */
-int printj_eobj (int indent) { return printf("%*s]\n", indent, ""); }
+int printj_elst (int indent) { return printf("%*s]\n", indent, ""); }
 
 
 /* Print a key/value (format) pair to either human or machine readable format */
