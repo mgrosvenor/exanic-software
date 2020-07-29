@@ -975,7 +975,7 @@ void show_all_devices(int verbose, int* ndevices)
 
     if(json_out)
     {
-        printj_elst();
+        printj_elst(0);
         printj_ejson();
     }
         
