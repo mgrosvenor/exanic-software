@@ -119,6 +119,8 @@ static int json_out = 0 ;
 //     KV_PF_CLI,
 // };
 
+
+
 /* Start a JSON record */
 int printj_sjson () { return printf("{\n"); }
 
@@ -161,7 +163,7 @@ int printj_kv ( int indent, const char* key, const char* valuef, ... )
 
     /* Make a new format string with all the constants in it */
     if(json_out)
-        snprintf(fmtstr,512,"%*s \"%s\" : \"%s\"  \n", indent, "", key, valuef);
+        snprintf(fmtstr,512,"%*s \"%s\" : \"%s\",\n", indent, "", key, valuef);
     else     
         snprintf(fmtstr,512,"%*s%s : %s\n", indent, "", key, valuef);
     
@@ -975,7 +977,7 @@ void show_all_devices(int verbose, int* ndevices)
 
     if(json_out)
     {
-        printj_elst(0);
+        printj_elst(2);
         printj_ejson();
     }
         
@@ -2464,7 +2466,7 @@ int handle_options_on_nic(char* device, int port_number, int argc, char** argv)
 
         if(json_out)
         {
-            printj_elst(0);
+            printj_elst(2);
             printj_ejson();
         }
         return 0;
@@ -2479,7 +2481,7 @@ int handle_options_on_nic(char* device, int port_number, int argc, char** argv)
         show_device_info(device, port_number, 1);
         if(json_out)
         {
-            printj_elst(0);
+            printj_elst(2);
             printj_ejson();
         }
         return 0;
@@ -2495,7 +2497,7 @@ int handle_options_on_nic(char* device, int port_number, int argc, char** argv)
         show_sfp_status(device, port_number);
         if(json_out)
         {
-            printj_elst(0);
+            printj_elst(2);
             printj_ejson();
         }
         return 0;
