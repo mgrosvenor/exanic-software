@@ -70,7 +70,8 @@ static const struct
 };
 
 
-enum conf_option_types {
+enum conf_option_types 
+{
     CONF_TYPE_BOOLEAN,
     CONF_TYPE_INT8,
     CONF_TYPE_UINT8,
@@ -88,9 +89,70 @@ enum conf_option_types {
 /* Global to switch on json formatted output */
 static int json_out = 0 ;
 
+// static const char* kvunit2str[] = 
+// {
+//     "V",
+//     "A",
+//     "C",
+//     "packets",
+//     "Mbps",
+//     "bool",
+// };
+
+
+
+// enum kvunits 
+// {
+//     KV_UNIT_VOLTS = 0,
+//     KV_UNIT_AMPS,
+//     KV_UNIT_DEGC,
+//     KV_UNIT_BYTES,    
+//     KV_UNIT_PACKETS,
+//     KV_UNIT_MBPS,    
+//     KV_UNIT_BOOL,
+// };
+
+// enum kvpflags
+// {
+//     KV_PF_ALL,
+//     KV_PF_JSON,
+//     KV_PF_CLI,
+// };
+
+/* Start a JSON record */
+int printj_sjson () { return printf("{\n"); }
+
+/* End a JSON record */
+int printj_ejson () { return printf("}\n"); }
+
+
+/* Start a JSON object */
+int printj_sobj (int indent, const char* name)
+{
+    if(json_out)
+        return printf(fmtstr,512,"%*s\"%s\" : {\n", indent, "", name);
+    else     
+        return printf(fmtstr,512,"%*s%s\n", indent, "", name);
+}
+
+/* End a JSON object */
+int printj_eobj (int indent) { return printf("%*s}\n", indent, ""); }
+
+/* Start a JSON list */
+int printj_slst  (int indent, const char* fomrat, ...)
+{
+    if(json_out)
+        return printf(fmtstr,512,"%*s\"%s\" : [\n", indent, "", name);
+    else     
+        return printf(fmtstr,512,"%*s%s\n", indent, "", name);
+}
+
+/* End a JSON List */
+int printj_eobj (int indent) { return printf("%*s]\n", indent, ""); }
+
 
 /* Print a key/value (format) pair to either human or machine readable format */
-int printkv ( int indent, const char* key, const char* valuef, ... )
+int printj_kv ( int indent, const char* key, const char* valuef, ... )
 {
     int result = 0;
     va_list args;
@@ -99,16 +161,10 @@ int printkv ( int indent, const char* key, const char* valuef, ... )
 
     /* Make a new format string with all the constants in it */
     if(json_out)
-    {
-        if(valuef)
-            snprintf(fmtstr,512,"%*s { \"%s\" : \"%s\" } \n", indent, "", key, valuef);
-        else   
-            snprintf(fmtstr,512,"%*s { \"%s\" : [ \n", indent, "", key);
-}
+        snprintf(fmtstr,512,"%*s \"%s\" : \"%s\"  \n", indent, "", key, valuef);
     else     
         snprintf(fmtstr,512,"%*s%s : %s\n", indent, "", key, valuef);
     
-
     /* Now actually print it*/
     result = vprintf(fmtstr,args);
     va_end(args);
@@ -431,7 +487,7 @@ void show_serial_number(exanic_t *exanic)
         goto close_file;
     }
 
-    printkv(2, "Serial number", "%s", serial);
+    printj_kv(2, "Serial number", "%s", serial);
 
 close_file:
     close(fd);
@@ -457,12 +513,16 @@ void show_device_info(const char *device, int port_number, int verbose)
     rev_date = exanic_get_hw_rev_date(exanic);
 
 
-    if(!json_out)
-      printf("Device ");
-    printkv(0,device,NULL);
+    if(json_out)
+    {
+        printj_sjson();
+        printk_slist(0,"exanic")
+    }
+    else
+      printf("Device %s\n", device);
 
     str = exanic_hardware_id_str(hw_type);
-    printkv(2,"Hardware type","%s", (str == NULL) ? "unknown" : str );
+    printj_kv(2,"Hardware type","%s", (str == NULL) ? "unknown" : str );
 
     if (verbose)
     {
@@ -471,7 +531,7 @@ void show_device_info(const char *device, int port_number, int verbose)
             uint32_t ddr_fitted = exanic_register_read(exanic,
                     REG_EXANIC_INDEX(REG_EXANIC_FEATURE_CFG))
                     & EXANIC_STATUS_HW_DRAM_PRES;
-            printkv(2,"DDR DRAM", "%s", ddr_fitted ? "present" : "not present");
+            printj_kv(2,"DDR DRAM", "%s", ddr_fitted ? "present" : "not present");
         }
 
         show_serial_number(exanic);
@@ -520,13 +580,13 @@ void show_device_info(const char *device, int port_number, int verbose)
         /*This is the one place where the format is inconsistent*/
         if(!json_out)
         {
-            printkv(2, "Temperature", "%.1f C   VCCint: %.2f V   VCCaux: %.2f V",
+            printj_kv(2, "Temperature", "%.1f C   VCCint: %.2f V   VCCaux: %.2f V",
 		   temp_real, vccint_real, vccaux_real);
         }
         else{
-            printkv(2,"Temperature", "%.1f C", temp_real);
-            printkv(2,"VCCint", "%.2f V", vccint_real);
-            printkv(2,"VCCaux", "%.2f V", vccaux_real);
+            printj_kv(2,"Temperature", "%.1f C", temp_real);
+            printj_kv(2,"VCCint", "%.2f V", vccint_real);
+            printj_kv(2,"VCCaux", "%.2f V", vccaux_real);
         }
 
     }
@@ -543,11 +603,11 @@ void show_device_info(const char *device, int port_number, int verbose)
 
         rpm = 60 * 0.5 * count * tick_hz / divisor;
 
-        printkv(2, "Fan speed", "%.0f RPM", rpm);
+        printj_kv(2, "Fan speed", "%.0f RPM", rpm);
     }
 
     str = exanic_function_id_str(function);
-    printkv(2,"Function", "%s", (str == NULL) ? "unknown" : str);
+    printj_kv(2,"Function", "%s", (str == NULL) ? "unknown" : str);
 
     {
         char buf[32];
@@ -559,7 +619,7 @@ void show_device_info(const char *device, int port_number, int verbose)
         if ((p = strchr(buf, '\n')) != NULL)
             *p = '\0';
 
-        printkv(2,"Firmware date", "%04d%02d%02d (%s)", tm->tm_year + 1900,
+        printj_kv(2,"Firmware date", "%04d%02d%02d (%s)", tm->tm_year + 1900,
 	                tm->tm_mon + 1, tm->tm_mday, buf);
     }
 
@@ -568,7 +628,7 @@ void show_device_info(const char *device, int port_number, int verbose)
         unsigned user_version;
         user_version = exanic_register_read(exanic,
                         REG_EXANIC_INDEX(REG_EXANIC_DEVKIT_USER_VERSION));
-        printkv(2, "Customer version", "%u (%x)", user_version, user_version);
+        printj_kv(2, "Customer version", "%u (%x)", user_version, user_version);
 
     }
 
@@ -576,7 +636,7 @@ void show_device_info(const char *device, int port_number, int verbose)
     {
         uint32_t ext_pwr = exanic_register_read(exanic,
                     REG_HW_INDEX(REG_HW_MISC_GPIO));
-        printkv(2,"External 12V power", "%s", ext_pwr ? "detected" : "not detected");
+        printj_kv(2,"External 12V power", "%s", ext_pwr ? "detected" : "not detected");
     }
 
     if (function == EXANIC_FUNCTION_NIC || function == EXANIC_FUNCTION_PTP_GM)
@@ -592,16 +652,16 @@ void show_device_info(const char *device, int port_number, int verbose)
             if (pps_out)
             {
                 if (config & EXANIC_HW_PER_OUT_CONFIG_PPS)
-                  printkv(2,"PPS port", "1PPS output, on %s edge\n",
+                  printj_kv(2,"PPS port", "1PPS output, on %s edge\n",
                             (flags & EXANIC_HW_SERIAL_PPS_OUT_VAL) ? "rising" : "falling");
                 else if (config & EXANIC_HW_PER_OUT_CONFIG_10M)
-                  printkv(2,"PPS port", "10MHz output\n");
+                  printj_kv(2,"PPS port", "10MHz output\n");
                 else
                     printf( "disabled\n");
             }
             else
             {
-        	printkv(2,"PPS port", "input, termination %s", pps_term_en ? "enabled" : "disabled");
+        	printj_kv(2,"PPS port", "input, termination %s", pps_term_en ? "enabled" : "disabled");
             }
         }
     }
@@ -617,7 +677,7 @@ void show_device_info(const char *device, int port_number, int verbose)
             hw_type == EXANIC_HW_X4 || hw_type == EXANIC_HW_X2)
         {
             uint32_t pl_cfg = exanic_get_bridging_config(exanic);
-            printkv(2,"Bridging", "%s", (pl_cfg & EXANIC_FEATURE_BRIDGE) ?
+            printj_kv(2,"Bridging", "%s", (pl_cfg & EXANIC_FEATURE_BRIDGE) ?
                     "on (ports 0 and 1)" : "off");
         }
     }
@@ -626,7 +686,7 @@ void show_device_info(const char *device, int port_number, int verbose)
     {
         int fw_capable;
         fw_capable = exanic_get_firewall_capability(exanic);
-        printkv(2,"Firewall capability", "%s",(fw_capable) ? "supported" :
+        printj_kv(2,"Firewall capability", "%s",(fw_capable) ? "supported" :
             "unsupported");
     }
 
@@ -641,7 +701,7 @@ void show_device_info(const char *device, int port_number, int verbose)
 	}
 	else
 	{
-	    printkv(2,"Evaluation","True");
+	    printj_kv(2,"Evaluation","True");
 	}
     }
 
@@ -663,7 +723,7 @@ void show_device_info(const char *device, int port_number, int verbose)
         if (!exanic_port_configurable(exanic, i))
             continue;
 
-        printkv(2, "Port %d", NULL, i);
+        printj_kv(2, "Port %d", NULL, i);
 
         rx_usable = exanic_port_rx_usable(exanic, i);
         tx_usable = exanic_port_tx_usable(exanic, i);
@@ -675,16 +735,16 @@ void show_device_info(const char *device, int port_number, int verbose)
         {
             exanic_get_interface_name(exanic, i, ifname, sizeof(ifname));
             if (strlen(ifname) > 0)
-		printkv(4,"Interface", ifname );
+		printj_kv(4,"Interface", ifname );
         }
 
-        printkv(4,"Port speed", "%u Mbps", exanic_get_port_speed(exanic, i) );
+        printj_kv(4,"Port speed", "%u Mbps", exanic_get_port_speed(exanic, i) );
 
         port_status = exanic_get_port_status(exanic, i);
         if (hwinfo->port_ff == EXANIC_PORT_QSFP || hwinfo->port_ff == EXANIC_PORT_QSFPDD)
         {
             /* No signal detected pin on QSFP or QSFPDD. */
-            printkv(4, "Port status", "%s, %s, %s",
+            printj_kv(4, "Port status", "%s, %s, %s",
                     (port_status & EXANIC_PORT_STATUS_ENABLED) ?
                         "enabled" : "disabled",
                     (port_status & EXANIC_PORT_STATUS_SFP) ?
@@ -695,7 +755,7 @@ void show_device_info(const char *device, int port_number, int verbose)
         }
         else
         {
-            printkv(4,"Port status", "%s, %s, %s, %s",
+            printj_kv(4,"Port status", "%s, %s, %s, %s",
                     (port_status & EXANIC_PORT_STATUS_ENABLED) ?
                         "enabled" : "disabled",
                     (port_status & EXANIC_PORT_STATUS_SFP) ?
@@ -731,7 +791,7 @@ void show_device_info(const char *device, int port_number, int verbose)
                     break;
             }
 
-            printkv(4,"Mirroring","%s",
+            printj_kv(4,"Mirroring","%s",
                     (pl_cfg & rx_bit) && (pl_cfg & tx_bit) ? "RX and TX" :
                     (pl_cfg & rx_bit) ? "RX only" :
                     (pl_cfg & tx_bit) ? "TX only" : "off");
@@ -763,19 +823,19 @@ void show_device_info(const char *device, int port_number, int verbose)
 		}
                 else
 		{
-                    printkv(4,"MAC filters", "%d", mac_rules);
-                    printkv(4,"IP filters", "%d", ip_rules);
+                    printj_kv(4,"MAC filters", "%d", mac_rules);
+                    printj_kv(4,"IP filters", "%d", ip_rules);
 		}
-                printkv(4,"TX buffer size", "%dkB", tx_size);
+                printj_kv(4,"TX buffer size", "%dkB", tx_size);
             }
 
             loopback = get_local_loopback(exanic, i);
             if ((loopback != -1) && (loopback || verbose))
-                printkv(4,"Loopback mode", "%s", loopback ? "on" : "off");
+                printj_kv(4,"Loopback mode", "%s", loopback ? "on" : "off");
 
             promisc = exanic_get_promiscuous_mode(exanic, i);
             if ((promisc != -1) && (promisc || verbose))
-                printkv(4,"Promiscuous mode","%s", promisc ? "on" : "off");
+                printj_kv(4,"Promiscuous mode","%s", promisc ? "on" : "off");
         }
 
         if ((function == EXANIC_FUNCTION_NIC ||
@@ -798,7 +858,7 @@ void show_device_info(const char *device, int port_number, int verbose)
             }
 
             if ((bypass != -1) && (bypass || verbose))
-                printkv(4,"Bypass-only mode","%s", bypass ? "on" : "off");
+                printj_kv(4,"Bypass-only mode","%s", bypass ? "on" : "off");
         }
 
         if ((function == EXANIC_FUNCTION_NIC ||
@@ -813,7 +873,7 @@ void show_device_info(const char *device, int port_number, int verbose)
             memset(mac_addr, 0, sizeof(mac_addr));
             if (exanic_get_mac_addr(exanic, i, mac_addr) == 0)
             {
-                printkv(4,"MAC address","%02x:%02x:%02x:%02x:%02x:%02x",
+                printj_kv(4,"MAC address","%02x:%02x:%02x:%02x:%02x:%02x",
                         mac_addr[0], mac_addr[1], mac_addr[2],
                         mac_addr[3], mac_addr[4], mac_addr[5]);
             }
@@ -836,8 +896,8 @@ void show_device_info(const char *device, int port_number, int verbose)
 		    }
                     else
 		    {
-                        printkv(4,"IP address", "%s", inet_ntoa(address));
-                        printkv(4,"IP address mask", "%s", inet_ntoa(netmask));
+                        printj_kv(4,"IP address", "%s", inet_ntoa(address));
+                        printj_kv(4,"IP address mask", "%s", inet_ntoa(netmask));
                     }
                 }
             }
@@ -861,13 +921,13 @@ void show_device_info(const char *device, int port_number, int verbose)
 	    }
             else
 	    {
-  	      printkv(4,"RX packets", "%u", port_stats.rx_count);
-	      printkv(4,"RX ignored", "%u", port_stats.rx_ignored_count);
-	      printkv(4,"RX errors",  "%u", port_stats.rx_error_count);
-	      printkv(4,"RX dropped", "%u", port_stats.rx_dropped_count);
+  	      printj_kv(4,"RX packets", "%u", port_stats.rx_count);
+	      printj_kv(4,"RX ignored", "%u", port_stats.rx_ignored_count);
+	      printj_kv(4,"RX errors",  "%u", port_stats.rx_error_count);
+	      printj_kv(4,"RX dropped", "%u", port_stats.rx_dropped_count);
 	    }
 
-            printkv(4,"TX packets","%u", port_stats.tx_count);
+            printj_kv(4,"TX packets","%u", port_stats.tx_count);
         }
     }
 
