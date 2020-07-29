@@ -516,7 +516,7 @@ void show_device_info(const char *device, int port_number, int verbose)
     if(json_out)
     {
         printj_sjson();
-        printk_slist(0,"exanic")
+        printk_slst(0,"exanic");
     }
     else
       printf("Device %s\n", device);
