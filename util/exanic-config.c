@@ -124,13 +124,13 @@ static int yaml_out = 0 ;
 /* Start a yaml list */
 int printy_slst  (int indent, const char* name)
 {
-    return printf("%*s%s: \n", indent, "", name);
+    return printf("%*s %s: \n", indent, "", name);
 }
 
 /* First object in list*/
 int printy_flst  (int indent)
 {
-    return printf("%*s-", indent, "");    
+    return printf("%*s -", indent, "");    
 }
 
 
@@ -145,7 +145,7 @@ int printy_kv ( int indent, const char* key, const char* valuef, ... )
 
     /* Make a new format string with all the constants in it */
     if(yaml_out)
-        snprintf(fmtstr,512,"%*s%s: %s\n", indent, "", key, valuef);
+        snprintf(fmtstr,512,"%*s %s: %s\n", indent, "", key, valuef);
     else
         if(valuef)
             snprintf(fmtstr,512,"%*s%s: %s\n", indent, "", key, valuef);
@@ -506,7 +506,7 @@ void show_device_info(const char *device, int port_number, int verbose)
       printf("Device %s\n", device);
 
     str = exanic_hardware_id_str(hw_type);
-    printy_kv(2,"Hardware type","%s", (str == NULL) ? "unknown" : str );
+    printy_kv(0,"Hardware type","%s", (str == NULL) ? "unknown" : str );
 
     if (verbose)
     {
@@ -726,7 +726,7 @@ void show_device_info(const char *device, int port_number, int verbose)
         {
             exanic_get_interface_name(exanic, i, ifname, sizeof(ifname));
             if (strlen(ifname) > 0)
-		        printy_kv(4,"Interface", ifname );
+		        printy_kv(0,"Interface", ifname );
         }
 
         printy_kv(4,"Port speed", "%u Mbps", exanic_get_port_speed(exanic, i) );
