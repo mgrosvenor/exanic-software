@@ -141,7 +141,7 @@ int printy_kv ( int indent, const char* key, const char* valuef, ... )
         if(valuef)
             snprintf(fmtstr,512,"%*s%s: %s\n", indent, "", key, valuef);
         else
-            return printf("%*s- ", indent, "");    
+             snprintf(fmtstr,512,"%*s- ", indent, "");    
     else
         if(valuef)
             snprintf(fmtstr,512,"%*s%s: %s\n", indent, "", key, valuef);
