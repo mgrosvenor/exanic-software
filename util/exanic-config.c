@@ -127,13 +127,6 @@ int printy_slst  (int indent, const char* name)
     return printf("%*s %s: \n", indent, "", name);
 }
 
-/* First object in list*/
-int printy_flst  (int indent)
-{
-    return printf("%*s -", indent, "");    
-}
-
-
 
 /* Print a key/value (format) pair to either human or machine readable format */
 int printy_kv ( int indent, const char* key, const char* valuef, ... )
@@ -145,12 +138,15 @@ int printy_kv ( int indent, const char* key, const char* valuef, ... )
 
     /* Make a new format string with all the constants in it */
     if(yaml_out)
-        snprintf(fmtstr,512,"%*s %s: %s\n", indent, "", key, valuef);
+        if(valuef)
+            snprintf(fmtstr,512,"%*s %s: %s\n", indent, "", key, valuef);
+        else
+            return printf("%*s -", indent, "");    
     else
         if(valuef)
             snprintf(fmtstr,512,"%*s%s: %s\n", indent, "", key, valuef);
         else
-        snprintf(fmtstr,512,"%*s%s:\n", indent, "", key);
+            snprintf(fmtstr,512,"%*s%s:\n%*s", indent, "", key, indent+2, "");
     
     /* Now actually print it*/
     result = vprintf(fmtstr,args);
@@ -499,11 +495,7 @@ void show_device_info(const char *device, int port_number, int verbose)
     function = exanic_get_function_id(exanic);
     rev_date = exanic_get_hw_rev_date(exanic);
 
-
-    if(yaml_out)
-        printy_flst(0);
-    else
-      printf("Device %s\n", device);
+    printy_kv(0,"Device %s\n", NULL, device,);
 
     str = exanic_hardware_id_str(hw_type);
     printy_kv(0,"Hardware type","%s", (str == NULL) ? "unknown" : str );
@@ -711,10 +703,7 @@ void show_device_info(const char *device, int port_number, int verbose)
         if (!exanic_port_configurable(exanic, i))
             continue;
 
-        if (yaml_out)
-            printy_flst(2);
-        else
-            printy_kv(2,"Port %d", NULL, i);
+        printy_kv(2,"Port %d", NULL, i);
 
         rx_usable = exanic_port_rx_usable(exanic, i);
         tx_usable = exanic_port_tx_usable(exanic, i);
