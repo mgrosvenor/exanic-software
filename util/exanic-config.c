@@ -960,12 +960,6 @@ void show_all_devices(int verbose, int* ndevices)
     }
     while (exanic_num < INT_MAX);
 
-    if(yaml_out)
-    {
-        printj_elst(2);
-        printj_ejobj(2,1);
-    }
-        
     if (ndevices)
         *ndevices = nnics;
 }
