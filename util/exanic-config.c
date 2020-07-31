@@ -130,7 +130,7 @@ int printy_slst  (int indent, const char* name)
 /* First object in list*/
 int printy_flst  (int indent)
 {
-    return printf("%*s-%s : ", indent, "");    
+    return printf("%*s-", indent, "");    
 }
 
 
