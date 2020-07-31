@@ -127,6 +127,20 @@ int printy_slst  (int indent, const char* name)
     return printf("%*s%s: \n", indent, "", name);
 }
 
+int printy_err ( int no, const char* format , ... )
+{
+    int result = 0;
+    va_list args;
+    va_start(args,format);
+    char fmtstr [512] = {};
+
+    /* Make a new format string with all the constants in it */
+    if(yaml_out)        
+        return vprintf(fmtstr,512,"error: %i\n message: %s\n", format, args);
+    else
+        return vfprintf(stderr, format, args);  
+}
+
 
 /* Print a key/value (format) pair to either human or machine readable format */
 int printy_kv ( int indent, const char* key, const char* valuef, ... )
@@ -242,7 +256,7 @@ exanic_t * acquire_handle(const char *device)
     exanic = exanic_acquire_handle(device);
     if (exanic == NULL)
     {
-        fprintf(stderr, "%s: %s\n", device, exanic_get_last_error());
+        printy_err(__LINE__, "%s: %s\n", device, exanic_get_last_error());
         exit(1);
     }
     if (exanic_check_supported(exanic) == -1)
@@ -386,7 +400,7 @@ int x2_x4_open_phy_attr(exanic_t *exanic, int port_number,
 
     if (exanic_get_sysfs_path(exanic, syspath, sizeof syspath) == -1)
     {
-        fprintf(stderr, "%s sysfs path: %s\n",
+        printy_err(__LINE__, "%s sysfs path: %s\n",
                         exanic->name, exanic_get_last_error());
         return -1;
     }
@@ -396,7 +410,7 @@ int x2_x4_open_phy_attr(exanic_t *exanic, int port_number,
     fd = open(tmp, O_RDWR);
     if (fd == -1)
     {
-        fprintf(stderr, "Failed to open \"%s\": %s\n",
+        printy_err(__LINE__, "Failed to open \"%s\": %s\n",
                         tmp, strerror(errno));
         return -1;
     }
@@ -447,7 +461,7 @@ void show_serial_number(exanic_t *exanic)
 
     if (exanic_get_sysfs_path(exanic, syspath, sizeof syspath) == -1)
     {
-        fprintf(stderr, "%s sysfs path: %s\n",
+        printy_err(__LINE__, "%s sysfs path: %s\n",
                         exanic->name, exanic_get_last_error());
         return;
     }
@@ -456,7 +470,7 @@ void show_serial_number(exanic_t *exanic)
     fd = open(tmp, O_RDONLY);
     if (fd == -1)
     {
-        fprintf(stderr, "Failed to open \"%s\": %s\n",
+        printy_err(__LINE__, "Failed to open \"%s\": %s\n",
                         tmp, strerror(errno));
         return;
     }
@@ -465,7 +479,7 @@ void show_serial_number(exanic_t *exanic)
     if (read(fd, serial, sizeof(serial) - 1) !=
         EXANIC_EEPROM_SERIAL_STRLEN)
     {
-        fprintf(stderr, "Failed to read from \"%s\": %s\n",
+        printy_err(__LINE__, "Failed to read from \"%s\": %s\n",
                         tmp, strerror(errno));
         goto close_file;
     }
@@ -859,7 +873,7 @@ void show_device_info(const char *device, int port_number, int verbose)
             }
             else
             {
-                fprintf(stderr, "%s:%d: error reading MAC address: %s\n",
+                printy_err(__LINE__, "%s:%d: error reading MAC address: %s\n",
                         device, i, exanic_get_last_error());
             }
 
@@ -984,7 +998,7 @@ int show_sfp_status(const char *device, int port_number)
 
     if ((port_status & EXANIC_PORT_STATUS_SFP) == 0)
     {
-        fprintf(stderr, "%s:%d: SFP not present\n", device, port_number);
+        printy_err(__LINE__, "%s:%d: SFP not present\n", device, port_number);
         release_handle(exanic);
         return 1;
     }
@@ -1051,7 +1065,7 @@ void get_interface_name(const char *device, int port_number,
     exanic_t *exanic = acquire_handle(device);
     if (exanic_get_interface_name(exanic, port_number, buf, len) != 0)
     {
-        fprintf(stderr, "%s:%d: %s\n", device, port_number,
+        printy_err(__LINE__, "%s:%d: %s\n", device, port_number,
                 exanic_get_last_error());
         release_handle(exanic);
         exit(1);
@@ -1070,7 +1084,7 @@ void set_port_enable_state(const char *device, int port_number, int mode)
     if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1 ||
         ioctl(fd, SIOCGIFFLAGS, &ifr) == -1)
     {
-        fprintf(stderr, "%s:%d: %s\n", device, port_number, strerror(errno));
+        printy_err(__LINE__, "%s:%d: %s\n", device, port_number, strerror(errno));
         exit(1);
     }
 
@@ -1081,7 +1095,7 @@ void set_port_enable_state(const char *device, int port_number, int mode)
 
     if (ioctl(fd, SIOCSIFFLAGS, &ifr) == -1)
     {
-        fprintf(stderr, "%s:%d: %s\n", device, port_number, strerror(errno));
+        printy_err(__LINE__, "%s:%d: %s\n", device, port_number, strerror(errno));
         exit(1);
     }
 
@@ -1100,7 +1114,7 @@ void set_promiscuous_mode(const char *device, int port_number, int mode)
     if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1 ||
         ioctl(fd, SIOCGIFFLAGS, &ifr) == -1)
     {
-        fprintf(stderr, "%s:%d: %s\n", device, port_number, strerror(errno));
+        printy_err(__LINE__, "%s:%d: %s\n", device, port_number, strerror(errno));
         exit(1);
     }
 
@@ -1111,7 +1125,7 @@ void set_promiscuous_mode(const char *device, int port_number, int mode)
 
     if (ioctl(fd, SIOCSIFFLAGS, &ifr) == -1)
     {
-        fprintf(stderr, "%s:%d: %s\n", device, port_number, strerror(errno));
+        printy_err(__LINE__, "%s:%d: %s\n", device, port_number, strerror(errno));
         exit(1);
     }
 
@@ -1133,7 +1147,7 @@ void set_ethtool_priv_flags(const char *device, int port_number,
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd == -1)
     {
-        fprintf(stderr, "%s:%d: %s\n", device, port_number, strerror(errno));
+        printy_err(__LINE__, "%s:%d: %s\n", device, port_number, strerror(errno));
         exit(1);
     }
 
@@ -1141,7 +1155,7 @@ void set_ethtool_priv_flags(const char *device, int port_number,
     if (ethtool_get_flag_names(fd, ifname, flag_names) == -1 ||
         ethtool_get_priv_flags(fd, ifname, &flags) == -1)
     {
-        fprintf(stderr, "%s:%d: %s\n", device, port_number, strerror(errno));
+        printy_err(__LINE__, "%s:%d: %s\n", device, port_number, strerror(errno));
         exit(1);
     }
 
@@ -1151,7 +1165,7 @@ void set_ethtool_priv_flags(const char *device, int port_number,
             break;
     if (i == 32)
     {
-        fprintf(stderr, "%s:%d: could not find flag %s\n", device, port_number,
+        printy_err(__LINE__, "%s:%d: could not find flag %s\n", device, port_number,
                 flag_name);
         exit(1);
     }
@@ -1164,7 +1178,7 @@ void set_ethtool_priv_flags(const char *device, int port_number,
     /* Set flags */
     if (ethtool_set_priv_flags(fd, ifname, flags) == -1)
     {
-        fprintf(stderr, "%s:%d: %s\n", device, port_number,
+        printy_err(__LINE__, "%s:%d: %s\n", device, port_number,
                 (errno == EINVAL) ? "Feature not supported on this port"
                                   : strerror(errno));
         exit(1);
@@ -1183,21 +1197,21 @@ void set_speed(const char *device, int port_number, uint32_t speed)
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd == -1)
     {
-        fprintf(stderr, "%s:%d: %s\n", device, port_number, strerror(errno));
+        printy_err(__LINE__, "%s:%d: %s\n", device, port_number, strerror(errno));
         exit(1);
     }
 
     if ((speed != SPEED_100) && (speed != SPEED_1000) &&
         (speed != SPEED_10000) && (speed != SPEED_40000))
     {
-        fprintf(stderr, "%s:%d: Invalid speed requested\n", device, port_number);
+        printy_err(__LINE__, "%s:%d: Invalid speed requested\n", device, port_number);
         exit(1);
     }
 
     /* Set speed */
     if (ethtool_set_speed(fd, ifname, speed) == -1)
     {
-        fprintf(stderr, "%s:%d: %s\n", device, port_number,
+        printy_err(__LINE__, "%s:%d: %s\n", device, port_number,
                 (errno == EINVAL) ? "Requested speed not supported on this port"
                                   : strerror(errno));
         exit(1);
@@ -1220,26 +1234,26 @@ void set_per_out(const char *device, int pps_10m, int enable)
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd == -1)
     {
-        fprintf(stderr, "%s: %s\n", device, strerror(errno));
+        printy_err(__LINE__, "%s: %s\n", device, strerror(errno));
         exit(1);
     }
 
     phc_index = 0;
     if (ethtool_get_phc_index(fd, ifname, &phc_index) == -1)
     {
-        fprintf(stderr, "%s: %s\n", device, strerror(errno));
+        printy_err(__LINE__, "%s: %s\n", device, strerror(errno));
         exit(1);
     }
 
     sprintf(phc_device, "/dev/ptp%d", phc_index);
     if ((clkfd = open(phc_device, O_RDWR)) == -1)
     {
-        fprintf(stderr, "%s: %s\n", device, strerror(errno));
+        printy_err(__LINE__, "%s: %s\n", device, strerror(errno));
         exit(1);
     }
     if (clock_gettime(FD_TO_CLOCKID(clkfd), &ts) == -1)
     {
-        fprintf(stderr, "%s: %s\n", device, strerror(errno));
+        printy_err(__LINE__, "%s: %s\n", device, strerror(errno));
         exit(1);
     }
 
@@ -1267,10 +1281,10 @@ void set_per_out(const char *device, int pps_10m, int enable)
     if (ioctl(clkfd, PTP_PEROUT_REQUEST, &req) == -1)
     {
         if (errno == EINVAL)
-            fprintf(stderr, "%s: %s output not supported on this device\n",
+            printy_err(__LINE__, "%s: %s output not supported on this device\n",
                     device, pps_10m ? "PPS" : "10M");
         else
-            fprintf(stderr, "%s: %s\n", device, strerror(errno));
+            printy_err(__LINE__, "%s: %s\n", device, strerror(errno));
         exit(1);
     }
 
@@ -1299,7 +1313,7 @@ void set_firewall_state(const char *device, exanic_firewall_state_t state)
     exanic_t *exanic = acquire_handle(device);
     if (exanic_set_firewall_state(exanic, state) != 0)
     {
-        fprintf(stderr, "%s: error changing firewall state: %s\n",
+        printy_err(__LINE__, "%s: error changing firewall state: %s\n",
                 device, exanic_get_last_error());
         release_handle(exanic);
         exit(1);
@@ -1327,7 +1341,7 @@ int set_local_loopback(const char * device, int port_number, int enable)
         int port_status = exanic_get_port_status(exanic, port_number);
         if (!(port_status & EXANIC_PORT_STATUS_ENABLED))
         {
-            fprintf(stderr, "%s:%d: cannot enable loopback on disabled port\n", device, port_number);
+            printy_err(__LINE__, "%s:%d: cannot enable loopback on disabled port\n", device, port_number);
             goto err_release_handle;
         }
 
@@ -1339,7 +1353,7 @@ int set_local_loopback(const char * device, int port_number, int enable)
         if (write(fd, loopback_command, sizeof loopback_command) !=
             sizeof loopback_command)
         {
-            fprintf(stderr, "%s: error %s loopback: %s\n",
+            printy_err(__LINE__, "%s: error %s loopback: %s\n",
                             device, enable ? "enabling" : "disabling",
                             strerror(errno));
             close(fd);
@@ -1364,7 +1378,7 @@ int set_local_loopback(const char * device, int port_number, int enable)
     loopback = get_local_loopback(exanic, port_number);
     if (loopback == -1 || enable != loopback)
     {
-        fprintf(stderr, "%s:%d: failed to update loopback mode:"
+        printy_err(__LINE__, "%s:%d: failed to update loopback mode:"
                         " not supported by firmware?\n", device, port_number);
         goto err_release_handle;
     }
@@ -1396,7 +1410,7 @@ int set_phy_parameter(const char *device, int port_number,
         size_t len;
         if (val == -1)
         {
-            fprintf(stderr, "%s:%d: invalid value specified for %s\n", device,
+            printy_err(__LINE__, "%s:%d: invalid value specified for %s\n", device,
                     port_number, parameter_name);
             err = 1;
             goto fd_close;
@@ -1405,7 +1419,7 @@ int set_phy_parameter(const char *device, int port_number,
         len = snprintf(buf, sizeof buf, "0x%hhx", (uint8_t)val);
         if (write(fd, buf, len + 1) == -1)
         {
-            fprintf(stderr, "%s:%d: failed to write phy parameter: %s\n",
+            printy_err(__LINE__, "%s:%d: failed to write phy parameter: %s\n",
                             device, port_number, strerror(errno));
             err = 1;
             goto fd_close;
@@ -1416,7 +1430,7 @@ int set_phy_parameter(const char *device, int port_number,
         int val;
         if (read(fd, buf, sizeof(buf) - 1) == -1)
         {
-            fprintf(stderr, "%s: %d: failed to read phy parameter: %s\n",
+            printy_err(__LINE__, "%s: %d: failed to read phy parameter: %s\n",
                             device, port_number, strerror(errno));
             err = 1;
             goto fd_close;
@@ -1425,7 +1439,7 @@ int set_phy_parameter(const char *device, int port_number,
         val = parse_number(buf);
         if (val == -1)
         {
-            fprintf(stderr, "%s: invalid value returned from driver: \"%s\"\n",
+            printy_err(__LINE__, "%s: invalid value returned from driver: \"%s\"\n",
                             device, buf);
             err = 1;
             goto fd_close;
@@ -1463,7 +1477,7 @@ int show_phy_parameters(const char *device, int port_number)
 
         if (read(fd, buf, sizeof(buf) - 1) == -1)
         {
-            fprintf(stderr, "%s:%d: error reading phy parameter \"%s\": %s\n",
+            printy_err(__LINE__, "%s:%d: error reading phy parameter \"%s\": %s\n",
                             device, port_number, param, strerror(errno));
             goto fd_close;
         }
@@ -1471,7 +1485,7 @@ int show_phy_parameters(const char *device, int port_number)
         val = parse_number(buf);
         if (val == -1)
         {
-            fprintf(stderr, "%s: invalid value returned from driver: \"%s\"\n",
+            printy_err(__LINE__, "%s: invalid value returned from driver: \"%s\"\n",
                             device, buf);
             goto fd_close;
         }
@@ -1500,7 +1514,7 @@ void show_firewall_filters(const char *device)
     max_filters = exanic_get_num_firewall_filters(exanic);
     if (max_filters == -1)
     {
-        fprintf(stderr, "%s: %s\n", device, exanic_get_last_error());
+        printy_err(__LINE__, "%s: %s\n", device, exanic_get_last_error());
         release_handle(exanic);
         exit(1);
     }
@@ -1511,7 +1525,7 @@ void show_firewall_filters(const char *device)
     {
         if (exanic_get_firewall_filter(exanic, i, filter, sizeof(filter)) == -1)
         {
-            fprintf(stderr, "%s: error on filter %d: %s\n",
+            printy_err(__LINE__, "%s: error on filter %d: %s\n",
                     device, i, exanic_get_last_error());
             release_handle(exanic);
             exit(1);
@@ -1542,7 +1556,7 @@ void show_firewall_dump(const char *device)
     max_filters = exanic_get_num_firewall_filters(exanic);
     if (max_filters == -1)
     {
-        fprintf(stderr, "%s: %s\n", device, exanic_get_last_error());
+        printy_err(__LINE__, "%s: %s\n", device, exanic_get_last_error());
         release_handle(exanic);
         exit(1);
     }
@@ -1560,7 +1574,7 @@ void show_firewall_dump(const char *device)
     {
         if (exanic_get_firewall_filter(exanic, i, filter, sizeof(filter)) == -1)
         {
-            fprintf(stderr, "%s: error on filter %d: %s\n",
+            printy_err(__LINE__, "%s: error on filter %d: %s\n",
                     device, i, exanic_get_last_error());
             release_handle(exanic);
             exit(1);
@@ -1579,7 +1593,7 @@ void set_firewall_filter(const char *device, int slot, const char *filter)
     if (exanic_get_firewall_filter(exanic, slot, buf, sizeof(buf)) == 0
             && strlen(buf) > 0)
     {
-        fprintf(stderr, "%s: error setting firewall filter: "
+        printy_err(__LINE__, "%s: error setting firewall filter: "
                 "filter %d is already in use\n",
                 device, slot);
         release_handle(exanic);
@@ -1587,7 +1601,7 @@ void set_firewall_filter(const char *device, int slot, const char *filter)
     }
     if (exanic_set_firewall_filter(exanic, slot, filter) == -1)
     {
-        fprintf(stderr, "%s: error setting firewall filter: %s\n",
+        printy_err(__LINE__, "%s: error setting firewall filter: %s\n",
                 device, exanic_get_last_error());
         release_handle(exanic);
         exit(1);
@@ -1601,7 +1615,7 @@ void clear_firewall_filter(const char *device, int slot)
     exanic_t *exanic = acquire_handle(device);
     if (exanic_clear_firewall_filter(exanic, slot) == -1)
     {
-        fprintf(stderr, "%s: error deleting firewall filter: %s\n",
+        printy_err(__LINE__, "%s: error deleting firewall filter: %s\n",
                 device, exanic_get_last_error());
         release_handle(exanic);
         exit(1);
@@ -1615,7 +1629,7 @@ void clear_all_firewall_filters(const char *device)
     exanic_t *exanic = acquire_handle(device);
     if (exanic_clear_all_firewall_filters(exanic) == -1)
     {
-        fprintf(stderr, "%s: error deleting firewall filters: %s\n",
+        printy_err(__LINE__, "%s: error deleting firewall filters: %s\n",
                 device, exanic_get_last_error());
         release_handle(exanic);
         exit(1);
@@ -1767,7 +1781,7 @@ void show_ptp_status(const char *device)
     }
     else
     {
-        fprintf(stderr, "%s:%d: error reading MAC address: %s\n",
+        printy_err(__LINE__, "%s:%d: error reading MAC address: %s\n",
                 device, 0, exanic_get_last_error());
     }
 
@@ -2019,7 +2033,7 @@ int ptp_save_conf(const char *device)
     eeprom = exanic_eeprom_acquire(exanic);
     if (eeprom == NULL)
     {
-        fprintf(stderr, "%s: error acquiring eeprom: %s\n",
+        printy_err(__LINE__, "%s: error acquiring eeprom: %s\n",
                         device, exanic_get_last_error());
         return -1;
     }
@@ -2031,7 +2045,7 @@ int ptp_save_conf(const char *device)
                                   (const uint8_t *)&reg);
         if (err)
         {
-            fprintf(stderr, "%s: error saving PTP configuration: %s\n",
+            printy_err(__LINE__, "%s: error saving PTP configuration: %s\n",
                     device, exanic_get_last_error());
             goto handle_release;
         }
@@ -2325,7 +2339,7 @@ int ptp_command(const char *progname, const char *device,
                     if (val < ptp_options[i].min ||
                             val > ptp_options[i].max)
                     {
-                        fprintf(stderr, "%s: %s must be in range %d..%d\n",
+                        printy_err(__LINE__, "%s: %s must be in range %d..%d\n",
                                 device, ptp_options[i].name,
                                 ptp_options[i].min, ptp_options[i].max);
                         exit(1);
@@ -2673,9 +2687,15 @@ int main(int argc, char *argv[])
     int port_number;
     int i, ret = 0;
 
+    if (yaml_out)
+    {
+        printf("%%YAML 1.1\n");
+        printf("---\n");
+    }
+
     if (!is_driver_loaded())
     {
-        fprintf(stderr, "Please load the exanic driver before using this tool\n");
+        printy_err(__LINE__, "Please load the exanic driver before using this tool\n");
         return 1;
     }
 
@@ -2692,7 +2712,7 @@ int main(int argc, char *argv[])
         show_all_devices(verbose, &nnics);
         if (nnics == 0)
         {
-            fprintf(stderr, "No ExaNICs detected!\n");
+            printy_err(__LINE__, "No ExaNICs detected!\n");
             return 1;
         }
         return 0;
@@ -2713,7 +2733,7 @@ int main(int argc, char *argv[])
     {
         if (ndevices == 0)
         {
-            fprintf(stderr, "Found no match for pattern \"%s\". "
+            printy_err(__LINE__, "Found no match for pattern \"%s\". "
                             "Please ensure that this device is plugged in\n", argv[1]);
             return 1;
         }
