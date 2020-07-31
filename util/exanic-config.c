@@ -495,7 +495,7 @@ void show_device_info(const char *device, int port_number, int verbose)
     function = exanic_get_function_id(exanic);
     rev_date = exanic_get_hw_rev_date(exanic);
 
-    printy_kv(0,"Device %s\n", NULL, device,);
+    printy_kv(0,"Device %s", NULL, device);
 
     str = exanic_hardware_id_str(hw_type);
     printy_kv(0,"Hardware type","%s", (str == NULL) ? "unknown" : str );
@@ -897,7 +897,6 @@ void show_device_info(const char *device, int port_number, int verbose)
 	      printf("    RX packets: %u  ignored: %u  error: %u  dropped: %u\n",
 		      port_stats.rx_count, port_stats.rx_ignored_count,
 		      port_stats.rx_error_count, port_stats.rx_dropped_count);
-	      printf("    TX packets: %u\n", port_stats.tx_count);
 	    }
             else
 	    {
