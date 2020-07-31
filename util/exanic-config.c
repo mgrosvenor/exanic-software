@@ -145,7 +145,7 @@ int printy_kv ( int indent, const char* key, const char* valuef, ... )
 
     /* Make a new format string with all the constants in it */
     if(yaml_out)
-        snprintf(fmtstr,512,"%*s %s: %s\n", indent, "", key, valuef);
+        snprintf(fmtstr,512,"%*s%s: %s\n", indent, "", key, valuef);
     else
         if(valuef)
             snprintf(fmtstr,512,"%*s%s: %s\n", indent, "", key, valuef);
