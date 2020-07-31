@@ -124,7 +124,7 @@ static int yaml_out = 0 ;
 /* Start a yaml list */
 int printy_slst  (int indent, const char* name)
 {
-    return printf("%*s%s : \n", indent, "", name);
+    return printf("%*s%s: \n", indent, "", name);
 }
 
 /* First object in list*/
@@ -145,9 +145,12 @@ int printy_kv ( int indent, const char* key, const char* valuef, ... )
 
     /* Make a new format string with all the constants in it */
     if(yaml_out)
-        snprintf(fmtstr,512,"%*s %s : %s\n", indent, "", key, valuef);
-    else     
-        snprintf(fmtstr,512,"%*s%s : %s\n", indent, "", key, valuef);
+        snprintf(fmtstr,512,"%*s %s: %s\n", indent, "", key, valuef);
+    else
+        if(valuef)
+            snprintf(fmtstr,512,"%*s%s: %s\n", indent, "", key, valuef);
+        else
+        snprintf(fmtstr,512,"%*s%s:\n", indent, "", key);
     
     /* Now actually print it*/
     result = vprintf(fmtstr,args);
