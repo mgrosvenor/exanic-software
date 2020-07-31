@@ -128,7 +128,7 @@ int printy_slst  (int indent, const char* name)
 }
 
 /* First object in list*/
-int printy_slst  (int indent)
+int printy_flst  (int indent)
 {
     return printf("%*s-%s : ", indent, "");    
 }
@@ -497,7 +497,9 @@ void show_device_info(const char *device, int port_number, int verbose)
     rev_date = exanic_get_hw_rev_date(exanic);
 
 
-    if(!yaml_out)
+    if(yaml_out)
+        printy_flst(0);
+    else
       printf("Device %s\n", device);
 
     str = exanic_hardware_id_str(hw_type);
@@ -707,7 +709,7 @@ void show_device_info(const char *device, int port_number, int verbose)
             continue;
 
         if (yaml_out)
-            printy_slst(2);
+            printy_flst(2);
         else
             printy_kv(2,"Port %d", NULL, i);
 
@@ -931,9 +933,7 @@ void show_all_devices(int verbose, int* ndevices)
     int nnics = 0;
 
     if(yaml_out)
-    {
         printy_slst(0,"exanic");
-    }
 
     do
     {
