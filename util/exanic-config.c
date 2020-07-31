@@ -124,14 +124,15 @@ static int yaml_out = 0 ;
 /* Start a yaml list */
 int printy_slst  (int indent, const char* name)
 {
-    if(yaml_out)
-        return printf("%*s-%s : \n", indent, "", name);
-    
-    return printf("%*s%s\n", indent, "", name);
+    return printf("%*s%s : \n", indent, "", name);
 }
 
-/* End a yaml List */
-int printy_elst (int indent) { return printf("%*s]\n", indent, ""); }
+/* First object in list*/
+int printy_slst  (int indent)
+{
+    return printf("%*s-%s : ", indent, "");    
+}
+
 
 
 /* Print a key/value (format) pair to either human or machine readable format */
@@ -705,7 +706,9 @@ void show_device_info(const char *device, int port_number, int verbose)
         if (!exanic_port_configurable(exanic, i))
             continue;
 
-        if (!yaml_out)
+        if (yaml_out)
+            printy_slst(2);
+        else
             printy_kv(2,"Port %d", NULL, i);
 
         rx_usable = exanic_port_rx_usable(exanic, i);
