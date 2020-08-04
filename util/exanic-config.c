@@ -70,7 +70,7 @@ static const struct
 };
 
 
-enum conf_option_types 
+enum conf_option_types
 {
     CONF_TYPE_BOOLEAN,
     CONF_TYPE_INT8,
@@ -87,9 +87,15 @@ enum conf_option_types
 #define EXANIC_DRIVER_SYSFS_ENTRY "/sys/bus/pci/drivers/exanic"
 
 /* Global to switch on yaml formatted output */
+#define YAML_OUT_VERSION_MAJOR 1
+#define YAML_OUT_VERSION_MINOR 0
+
+#define YAML_OUT_VERSION_TEXT STR(YAML_OUT_VERSION_MAJOR) "." \
+                              STR(YAML_OUT_VERSION_MINOR)
+
 static int yaml_out = 0 ;
 
-// static const char* kvunit2str[] = 
+// static const char* kvunit2str[] =
 // {
 //     "V",
 //     "A",
@@ -101,14 +107,14 @@ static int yaml_out = 0 ;
 
 
 
-// enum kvunits 
+// enum kvunits
 // {
 //     KV_UNIT_VOLTS = 0,
 //     KV_UNIT_AMPS,
 //     KV_UNIT_DEGC,
-//     KV_UNIT_BYTES,    
+//     KV_UNIT_BYTES,
 //     KV_UNIT_PACKETS,
-//     KV_UNIT_MBPS,    
+//     KV_UNIT_MBPS,
 //     KV_UNIT_BOOL,
 // };
 
@@ -135,37 +141,36 @@ int printy_err ( int no, const char* format , ... )
     char fmtstr [512] = {};
 
     /* Make a new format string with all the constants in it */
-    if(yaml_out)        
+    if(yaml_out)
         return vprintf(fmtstr,512,"error: %i\n message: %s\n", format, args);
     else
-        return vfprintf(stderr, format, args);  
+        return vfprintf(stderr, format, args);
 }
 
 
 /* Print a key/value (format) pair to either human or machine readable format */
-int printy_kv ( int indent, const char* key, const char* valuef, ... )
+int printy_kv(int indent, const char* key, const char* valuef, ...)
 {
-    int result = 0;
-    va_list args;
-    va_start(args,valuef);
-    char fmtstr [512] = {};
+	int result = 0;
+	va_list args;
+	va_start(args, valuef);
+	char fmtstr[512] = { 0 };
 
-    /* Make a new format string with all the constants in it */
-    if(yaml_out)
-        if(valuef)
-            snprintf(fmtstr,512,"%*s%s: %s\n", indent, "", key, valuef);
-        else
-             snprintf(fmtstr,512,"%*s- ", indent, "");    
-    else
-        if(valuef)
-            snprintf(fmtstr,512,"%*s%s: %s\n", indent, "", key, valuef);
-        else
-            snprintf(fmtstr,512,"%*s%s:\n%*s", indent, "", key, indent+2, "");
-    
-    /* Now actually print it*/
-    result = vprintf(fmtstr,args);
-    va_end(args);
-    return result;
+	/* Make a new format string with all the constants in it */
+	if (yaml_out)
+		if (valuef)
+			snprintf(fmtstr, 512, "%*s%s: %s\n", indent, "", key, valuef);
+		else
+			snprintf(fmtstr, 512, "%*s- ", indent, "");
+	else if (valuef)
+		snprintf(fmtstr, 512, "%*s%s: %s\n", indent, "", key, valuef);
+	else
+		snprintf(fmtstr, 512, "%*s%s:\n%*s", indent, "", key, indent + 2, "");
+
+	/* Now actually print it*/
+	result = vprintf(fmtstr, args);
+	va_end(args);
+	return result;
 }
 
 
@@ -484,12 +489,13 @@ void show_serial_number(exanic_t *exanic)
         goto close_file;
     }
 
-    printy_kv(2, "Serial number", "%s", serial);
+	printy_kv(2, "Serial number", "%s", serial);
 
 close_file:
     close(fd);
 }
 
+static int first_device = 1;
 void show_device_info(const char *device, int port_number, int verbose)
 {
     int i, first_port, last_port, port_status;
@@ -508,6 +514,12 @@ void show_device_info(const char *device, int port_number, int verbose)
     hw_type = exanic_get_hw_type(exanic);
     function = exanic_get_function_id(exanic);
     rev_date = exanic_get_hw_rev_date(exanic);
+
+    if(yaml_out && first_device)
+    {
+		printy_slst(0,"exanic");
+		first_device = 0;
+    }
 
     printy_kv(0,"Device %s", NULL, device);
 
@@ -2444,18 +2456,12 @@ int handle_options_on_nic(char* device, int port_number, int argc, char** argv)
 
     if (argc == 2)
     {
-        if(yaml_out)
-            printy_slst(0,"exanic");
-
         show_device_info(device, port_number, 0);
 
         return 0;
     }
     else if (argc == 3 && strcmp(argv[2], "-v") == 0)
     {
-        if(yaml_out)
-            printy_slst(0,"exanic");
-
         show_device_info(device, port_number, 1);
 
         return 0;
@@ -2463,11 +2469,8 @@ int handle_options_on_nic(char* device, int port_number, int argc, char** argv)
     else if (argc == 4 && strcmp(argv[2], "sfp") == 0
             && strcmp(argv[3], "status") == 0 && port_number != -1)
     {
-        if(yaml_out)
-            printy_slst(0,"exanic");
-     
         show_sfp_status(device, port_number);
-     
+
         return 0;
     }
     else if (argc == 4 && strcmp(argv[2], "counters") == 0
@@ -2691,6 +2694,8 @@ int main(int argc, char *argv[])
     {
         printf("%%YAML 1.1\n");
         printf("---\n");
+        printf("libexanic-version : %s\n", EXANIC_VERSION_TEXT);
+        printf("yaml-out-version : %s\n", YAML_OUT_VERSION_TEXT);
     }
 
     if (!is_driver_loaded())
